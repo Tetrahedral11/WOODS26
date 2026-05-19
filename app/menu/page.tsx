@@ -3078,6 +3078,23 @@ export default function WoodsSite() {
       <footer className="mt-12 pb-12 text-center text-xs text-white/50">
         © {new Date().getFullYear()} {dict.brand}
       </footer>
+
+      {/* Floating Google Review Button */}
+      <a
+        href="https://search.google.com/local/writereview?placeid=ChIJSVXdlZ0IuxQRaY_NgN2fPDk="
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-white text-black text-sm font-semibold px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+      >
+        {/* Google G Logo */}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5 flex-shrink-0">
+          <path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.85l6.09-6.09C34.46 3.04 29.5 1 24 1 14.82 1 7.07 6.48 3.64 14.22l7.1 5.52C12.5 13.59 17.78 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.1 24.5c0-1.64-.15-3.22-.42-4.74H24v8.97h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.1 5.52C43.18 37.28 46.1 31.36 46.1 24.5z"/>
+          <path fill="#FBBC05" d="M10.74 28.26A14.54 14.54 0 0 1 9.5 24c0-1.48.26-2.91.74-4.26l-7.1-5.52A22.93 22.93 0 0 0 1 24c0 3.77.9 7.34 2.64 10.48l7.1-5.52-.0.3z"/>
+          <path fill="#34A853" d="M24 47c5.5 0 10.12-1.82 13.49-4.94l-7.1-5.52C28.6 38.42 26.41 39.5 24 39.5c-6.22 0-11.5-4.09-13.26-9.74l-7.1 5.52C7.07 43.52 14.82 47 24 47z"/>
+        </svg>
+        ⭐ Leave a Review
+      </a>
     </div>
   );
 }
