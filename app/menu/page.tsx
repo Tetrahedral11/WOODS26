@@ -2495,8 +2495,8 @@ export const MENU_ITEMS: MenuItem[] = [
                           { id: "coupe-caraibes", price: 60, category: "desserts", subcategory: "Coupes glacées" },
                           { id: "coupe-caramelo", price: 60, category: "desserts", subcategory: "Coupes glacées" },
                           { id: "coupe-bisutto", price: 60, category: "desserts", subcategory: "Coupes glacées" },
-                          { id: "coupe-negrisco", price: 80, category: "desserts", subcategory: "Coupes glacées" },
-                          { id: "coupe-exotique", price: 60, category: "desserts", subcategory: "Coupes glacées" },
+                          { id: "coupe-negrisco", price: 60, category: "desserts", subcategory: "Coupes glacées" },
+                          { id: "coupe-exotique", price: 80, category: "desserts", subcategory: "Coupes glacées" },
                           { id: "coupe-woods", price: 95, category: "desserts", subcategory: "Coupes glacées" },
 
                             // ——— COMPOSEZ VOTRE GLACE
