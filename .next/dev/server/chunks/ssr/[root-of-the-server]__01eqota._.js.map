@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":["file:///Users/mac/Desktop/WOODS26/app/favicon.ico.mjs%20%28structured%20image%20object%29"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 256, height: 256 }\n"],"names":["src","width","height"],"mappings":";;;;AAAA;;uCACe;IAAEA,KAAAA,mIAAG;IAAEC,OAAO;IAAKC,QAAQ;AAAI"}},
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///Users/mac/Desktop/WOODS26/app/page.tsx"],"sourcesContent":["import Link from \"next/link\";\n\nexport default function Home() {\n  return (\n    <main className=\"min-h-screen flex flex-col items-center justify-center bg-black text-white\">\n      <h1 className=\"text-5xl font-bold tracking-widest mb-4\">WOODS</h1>\n      <p className=\"text-gray-400 mb-10 tracking-wide text-sm uppercase\">Restaurant & Café</p>\n      <Link\n        href=\"/menu\"\n        className=\"border border-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-white hover:text-black transition-colors duration-200\"\n      >\n        View Menu\n      </Link>\n    </main>\n  );\n}\n"],"names":["Home","className","href"],"mappings":";;;;;AAAA;;;AAEe,SAASA;IACtB,qBACE,8OAAC;QAAKC,WAAU;;0BACd,8OAAC;gBAAGA,WAAU;0BAA0C;;;;;;0BACxD,8OAAC;gBAAEA,WAAU;0BAAsD;;;;;;0BACnE,8OAAC,0LAAI;gBACHC,MAAK;gBACLD,WAAU;0BACX;;;;;;;;;;;;AAKP"}}]
+}

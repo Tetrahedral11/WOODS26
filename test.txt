@@ -1,0 +1,1192 @@
+"use client";
+
+/**
+ * WOODS — Multilingual Menu (FR / EN / NL)
+ * - Single-file, professional structure
+ * - Language-neutral items (ids + price, category, subcategory)
+ * - Translations provide ALL display strings (brand, UI, cat/subcat, item name/desc)
+ * - t() helper with graceful fallback (FR default)
+ * - Culinary-correct terms in EN/NL (not literal word-for-word)
+ */
+
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  Menu as MenuIcon,
+  X,
+  Languages,
+  Search,
+  ChevronRight,
+  Coffee,
+  Pizza,
+  Sandwich,
+  Soup,
+  IceCream,
+  Salad,
+  CupSoda,
+  Images,
+  Info,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+/* ============================================================================
+   1) Types
+   ========================================================================== */
+type LangKey = "fr" | "en" | "nl";
+
+type CategoryId =
+  | "drinks"
+  | "breakfast"
+  | "entrees"
+  | "plats"
+  | "pastas"
+  | "pizzas"
+  | "aperitifs"
+  | "burgers"
+  | "crepes_savory"
+  | "tacos"
+  | "sandwiches"
+  | "panini"
+  | "sweets_crepes_gaufres_pancakes"
+  | "desserts";
+
+export type MenuItem = {
+  id: string;
+  price: number | null; // some prices TBD in your data
+  category: CategoryId;
+  subcategory?: string; // language-neutral slug-like label
+  image?: string;
+  tags?: string[];
+};
+
+/* ============================================================================
+   2) Language meta + UI strings (brand, actions, headers)
+   ========================================================================== */
+const UI: Record<LangKey, { rtl?: boolean; brand: string; chooseLanguage: string; about: string; menu: string; gallery: string; search: string; storyTitle: string; story: string; all: string; itemsCount: (n: number) => string; priceMAD: (v: number) => string; }> = {
+  fr: {
+    brand: "WOODS",
+    chooseLanguage: "Choisissez votre langue",
+    about: "À propos",
+    menu: "Notre Carte",
+    gallery: "Galerie",
+    search: "Rechercher des plats, ingrédients…",
+    storyTitle: "Notre histoire",
+    story: "Chez WOODS, nous mêlons la chaleur marocaine à un esprit contemporain. Des produits de saison, locaux et respectés.",
+    all: "Tout",
+    itemsCount: (n) => `${n}`,
+    priceMAD: (v) => `${v} DH`,
+  },
+  en: {
+    brand: "WOODS",
+    chooseLanguage: "Choose your language",
+    about: "About Us",
+    menu: "Our Menu",
+    gallery: "Gallery",
+    search: "Search dishes, ingredients…",
+    storyTitle: "Our Story",
+    story: "At WOODS, we blend Moroccan warmth with modern craft. Seasonal, local produce handled with care.",
+    all: "All",
+    itemsCount: (n) => `${n}`,
+    priceMAD: (v) => `${v} MAD`,
+  },
+  nl: {
+    brand: "WOODS",
+    chooseLanguage: "Kies je taal",
+    about: "Over ons",
+    menu: "Onze kaart",
+    gallery: "Galerij",
+    search: "Zoek gerechten of ingrediënten…",
+    storyTitle: "Ons verhaal",
+    story: "Bij WOODS combineren we Marokkaanse warmte met moderne ambacht. Seizoensgebonden en lokaal, met respect bereid.",
+    all: "Alles",
+    itemsCount: (n) => `${n}`,
+    priceMAD: (v) => `${v} MAD`,
+  },
+};
+
+/* ============================================================================
+   3) Category & Subcategory labels
+   - Keys are language-neutral; values are per-language strings.
+   ========================================================================== */
+const CAT_LABELS: Record<LangKey, Record<CategoryId, string>> = {
+  fr: {
+    drinks: "Boissons",
+    breakfast: "Petit-déjeuner",
+    entrees: "Entrées",
+    plats: "Plats",
+    pastas: "Pâtes",
+    pizzas: "Pizzas",
+    aperitifs: "Apéritifs",
+    burgers: "Burgers",
+    crepes_savory: "Crêpes salées",
+    tacos: "Tacos",
+    sandwiches: "Sandwichs",
+    panini: "Panini",
+    sweets_crepes_gaufres_pancakes: "Crêpes & Gaufres sucrées",
+    desserts: "Desserts",
+  },
+  en: {
+    drinks: "Drinks",
+    breakfast: "Breakfast",
+    entrees: "Starters",
+    plats: "Mains",
+    pastas: "Pastas",
+    pizzas: "Pizzas",
+    aperitifs: "Appetizers",
+    burgers: "Burgers",
+    crepes_savory: "Savory Crêpes",
+    tacos: "Tacos",
+    sandwiches: "Sandwiches",
+    panini: "Panini",
+    sweets_crepes_gaufres_pancakes: "Sweet Crêpes & Waffles",
+    desserts: "Desserts",
+  },
+  nl: {
+    drinks: "Dranken",
+    breakfast: "Ontbijt",
+    entrees: "Voorgerechten",
+    plats: "Hoofdgerechten",
+    pastas: "Pasta",
+    pizzas: "Pizza’s",
+    aperitifs: "Aperitief",
+    burgers: "Burgers",
+    crepes_savory: "Hartige crêpes",
+    tacos: "Taco’s",
+    sandwiches: "Broodjes",
+    panini: "Panini",
+    sweets_crepes_gaufres_pancakes: "Zoete crêpes & wafels",
+    desserts: "Desserts",
+  },
+};
+
+/** Curated subcategory labels you actually use */
+const SUB_LABELS: Record<LangKey, Record<string, string>> = {
+  fr: {
+    "Matcha": "Matcha",
+    "Café & Spécialités": "Café & Spécialités",
+    "Rafraîchissants": "Rafraîchissants",
+    "Smoothies": "Smoothies",
+    "Redbull Crémeux": "Redbull Crémeux",
+    "Boissons fraîches": "Boissons fraîches",
+    "Mojitos": "Mojitos",
+    "Thés glacés": "Thés glacés",
+    "Cocktails sans alcool": "Mocktails",
+    "Jus": "Jus",
+    "Jus pressés": "Jus pressés",
+
+    "Espagnol": "Espagnol",
+    "Marocaine": "Marocaine",
+    "Bols": "Bols",
+    "Tartines": "Tartines",
+    "Petits pains briochés": "Petits pains briochés",
+    "Sandwichs": "Sandwichs",
+    "Œufs": "Œufs",
+    "À la Carte": "À la Carte",
+    "Toast Hollandais": "Toast Hollandais",
+    "Formules Enfants": "Formules Enfants",
+
+    "Entrées Froides": "Entrées Froides",
+    "Entrées Chaudes": "Entrées Chaudes",
+    "À Base Poisson": "À Base Poisson",
+    "À Base Viande & Poulet": "À Base Viande & Poulet",
+    "Marocains": "Marocains",
+
+    "Crêpes Salées": "Crêpes Salées",
+    "Crêpes & Gauffres": "Crêpes & Gaufres",
+    "Pancake": "Pancakes",
+
+    "Frappuccino": "Frappuccino",
+    "freakshake": "Freakshake",
+    "Coupes glacées": "Coupes glacées",
+    "Composez Votre Glace": "Composez Votre Glace",
+  },
+  en: {
+    "Matcha": "Matcha",
+    "Café & Spécialités": "Coffee & Signatures",
+    "Rafraîchissants": "Refreshers",
+    "Smoothies": "Smoothies",
+    "Redbull Crémeux": "Creamy Red Bull",
+    "Boissons fraîches": "Cold Drinks",
+    "Mojitos": "Mojitos (Non-alcoholic)",
+    "Thés glacés": "Iced Teas",
+    "Cocktails sans alcool": "Mocktails",
+    "Jus": "Juices",
+    "Jus pressés": "Pressed Juices",
+
+    "Espagnol": "Spanish Set",
+    "Marocaine": "Moroccan Set",
+    "Bols": "Bowls",
+    "Tartines": "Open-Face Toasts",
+    "Petits pains briochés": "Brioche Buns",
+    "Sandwichs": "Sandwiches",
+    "Œufs": "Eggs",
+    "À la Carte": "À la carte",
+    "Toast Hollandais": "Dutch Toast",
+    "Formules Enfants": "Kids Menu",
+
+    "Entrées Froides": "Cold Starters",
+    "Entrées Chaudes": "Hot Starters",
+    "À Base Poisson": "Fish",
+    "À Base Viande & Poulet": "Meat & Chicken",
+    "Marocains": "Moroccan",
+
+    "Crêpes Salées": "Savory Crêpes",
+    "Crêpes & Gauffres": "Crêpes & Waffles",
+    "Pancake": "Pancakes",
+
+    "Frappuccino": "Frappuccino",
+    "freakshake": "Freakshake",
+    "Coupes glacées": "Ice-Cream Coupes",
+    "Composez Votre Glace": "Build Your Ice-Cream",
+  },
+  nl: {
+    "Matcha": "Matcha",
+    "Café & Spécialités": "Koffie & Specials",
+    "Rafraîchissants": "Refreshers",
+    "Smoothies": "Smoothies",
+    "Redbull Crémeux": "Romige Red Bull",
+    "Boissons fraîches": "Koude dranken",
+    "Mojitos": "Mojito’s (alcoholvrij)",
+    "Thés glacés": "IJsthee",
+    "Cocktails sans alcool": "Mocktails",
+    "Jus": "Sappen",
+    "Jus pressés": "Versgeperste sappen",
+
+    "Espagnol": "Spaans menu",
+    "Marocaine": "Marokkaans menu",
+    "Bols": "Bowls",
+    "Tartines": "Open toasts",
+    "Petits pains briochés": "Brioches",
+    "Sandwichs": "Broodjes",
+    "Œufs": "Eieren",
+    "À la Carte": "À la carte",
+    "Toast Hollandais": "Hollandse toast",
+    "Formules Enfants": "Kinderformules",
+
+    "Entrées Froides": "Koude voorgerechten",
+    "Entrées Chaudes": "Warme voorgerechten",
+    "À Base Poisson": "Vis",
+    "À Base Viande & Poulet": "Vlees & Kip",
+    "Marocains": "Marokkaans",
+
+    "Crêpes Salées": "Hartige crêpes",
+    "Crêpes & Gauffres": "Crêpes & wafels",
+    "Pancake": "Pannenkoeken",
+
+    "Frappuccino": "Frappuccino",
+    "freakshake": "Freakshake",
+    "Coupes glacées": "Ijscoupes",
+    "Composez Votre Glace": "Stel je ijs samen",
+  },
+};
+
+/* ============================================================================
+   4) Item translations (name + desc) — keyed by item id
+   - FR is the authoritative source (complete).
+   - EN/NL contain curated culinary translations.
+   - Any missing key falls back to FR.
+   ========================================================================== */
+type ItemText = { name: string; desc?: string };
+
+type ItemsTextPack = Record<string, ItemText>;
+
+const ITEMS_FR: ItemsTextPack = {
+  // ——— Drinks (Matcha)
+  "matcha-latte": { name: "Matcha Latte / Glacé", desc: "Thé matcha, lait au choix" },
+  "matcha-coco": { name: "Matcha Coco", desc: "Matcha, lait de coco" },
+  "matcha-pink-foam": { name: "Matcha Mousse Rose", desc: "Matcha, mousse sucrée rose" },
+  "matcha-fraise": { name: "Matcha Fraise", desc: "Matcha, fraise" },
+  "matcha-mangue": { name: "Matcha Mangue", desc: "Matcha, mangue" },
+
+  // ——— Coffee & Spe
+  "coffee-coco-latte": { name: "Latte Coco", desc: "Expresso, lait de coco" },
+  "coffee-creme-brulee-latte": { name: "Latte Crème Brûlée", desc: "Latte sucré, caramel croquant" },
+  "coffee-spanish-latte": { name: "Latte Espagnol", desc: "Latte sucré façon espagnole" },
+  "coffee-saffron-latte": { name: "Latte Safran", desc: "Infusion de safran, latte" },
+
+  // ——— Refreshers
+  "refresher-hibiscus": { name: "Hibiscus", desc: "Infusion d’hibiscus glacée" },
+  "refresher-hibiscus-peche": { name: "Hibiscus Pêche", desc: "Hibiscus, pêche" },
+  "refresher-tropical-ginger": { name: "Gingembre Tropical", desc: "Gingembre, fruits exotiques" },
+  "refresher-watermelon-fizz": { name: "Fizz Pastèque", desc: "Pastèque, pétillant" },
+
+  // ——— Smoothies (TBD prices were null in your data, keep desc concise)
+  "smoothie-multivitamine": { name: "Multivitamines", desc: "Mélange de fruits variés" },
+  "smoothie-california-dream": { name: "California Dream", desc: "Fruits tropicaux" },
+  "smoothie-jack-special": { name: "Jack Spécial", desc: "Signature maison" },
+  "smoothie-coco-mango": { name: "Coco Mangue", desc: "Noix de coco, mangue" },
+  "smoothie-bananasa": { name: "Bananasa", desc: "Banane, lait au choix" },
+
+  // ——— Creamy Red Bull
+  "creamy-redbull-blueberry": { name: "Redbull Crémeux Myrtille", desc: "Boisson énergisante, crème, myrtille" },
+  "creamy-redbull-strawberry": { name: "Redbull Crémeux Fraise", desc: "Boisson énergisante, crème, fraise" },
+  "creamy-redbull-peach": { name: "Redbull Crémeux Pêche", desc: "Boisson énergisante, crème, pêche" },
+
+  // ——— Cold drinks / Red Bull std
+  "drink-redbull": { name: "Red Bull", desc: "Boisson énergisante" },
+  "drink-water-33cl": { name: "Eau minérale 33 cl" },
+  "drink-water-50cl": { name: "Eau minérale 1/2 l" },
+  "drink-soda": { name: "Boissons gazeuses" },
+  "drink-iced-tea": { name: "Thé glacé citron/pêche" },
+  "drink-beer-na": { name: "Bière sans alcool" },
+
+  // ——— Mojitos (NA)
+  "mojito-green": { name: "Mojito Vert", desc: "Citron vert, menthe, pétillant" },
+  "mojito-strawberry": { name: "Mojito Fraise", desc: "Fraise, citron vert, menthe" },
+  "mojito-passion": { name: "Mojito Fruit de la Passion", desc: "Fruit de la passion, menthe" },
+  "mojito-redbull": { name: "Mojito Redbull", desc: "Red Bull, citron vert, menthe" },
+  "mojito-strawberry-bull": { name: "Mojito Bull Fraise", desc: "Red Bull, fraise, menthe" },
+  "mojito-black": { name: "Mojito Noir", desc: "Cassonade foncée, menthe" },
+
+  // ——— Iced teas
+  "icedtea-raspberry": { name: "Thé Glacé Framboise", desc: "Infusion froide framboise" },
+  "icedtea-lemon": { name: "Thé Glacé Citron", desc: "Infusion froide citron" },
+
+  // ——— Mocktails
+  "mocktail-florida": { name: "Florida", desc: "Agrumes, pétillant" },
+  "mocktail-bora-bora": { name: "Bora Bora", desc: "Ananas, coco" },
+  "mocktail-pinacolada": { name: "Piñacolada", desc: "Coco, ananas" },
+  "mocktail-ocean-11": { name: "Ocean 11", desc: "Bleuet, agrumes" },
+
+  // ——— Juices
+  "juice-orange": { name: "Jus d’Orange", desc: "Pressé minute ou nectar" },
+  "juice-lemon": { name: "Jus de Citron", desc: "Citron frais" },
+  "juice-lemon-mint": { name: "Citron & Menthe", desc: "Citron, menthe" },
+  "juice-carrot": { name: "Jus de Carotte", desc: "Carotte fraîche" },
+  "juice-banana": { name: "Jus de Banane", desc: "Banane, lait au choix" },
+  "juice-strawberry": { name: "Jus de Fraise", desc: "Fraise mixée" },
+  "juice-apple": { name: "Jus de Pomme", desc: "Pomme douce" },
+  "juice-peach": { name: "Jus de Pêche", desc: "Pêche, douceur" },
+  "juice-avocado": { name: "Jus d’Avocat", desc: "Avocat onctueux" },
+  "juice-mango": { name: "Jus de Mangue", desc: "Mangue mûre" },
+  "juice-pineapple": { name: "Jus d’Ananas", desc: "Ananas tropical" },
+  "juice-kiwi": { name: "Jus de Kiwi", desc: "Kiwi acidulé" },
+
+  // ——— Pressed
+  "pressed-apple": { name: "Jus de Pomme Pressé", desc: "Pomme pressée à froid" },
+  "pressed-pineapple": { name: "Jus d’Ananas Pressé", desc: "Ananas pressé à froid" },
+  "pressed-carrot": { name: "Jus de Carotte Pressé", desc: "Carotte pressée à froid" },
+  "pressed-pomegranate": { name: "Jus de Grenade Pressé", desc: "Grenade pressée à froid" },
+  "pressed-watermelon": { name: "Jus de Pastèque Pressé", desc: "Pastèque pressée à froid" },
+
+  // ——— Breakfast sets
+  "breakfast-formule-espagnole": {
+    name: "Espagnole",
+    desc: "2 œufs, panier de pain; purée de tomate, manchego, huile d’ail; boisson chaude; mini jus d’orange; eau minérale",
+  },
+  "breakfast-formule-marocaine": {
+    name: "Marocaine",
+    desc: "Harcha, rghayf, baghrir, pain de blé; accompagnement (beurre, fromage, miel, amlou); boisson chaude; mini jus d’orange; eau minérale",
+  },
+
+  // ——— Bowls, tartines, buns, sandwiches, eggs, à la carte, kids (FR names already good)
+  "bowl-original-yogurt": { name: "Yaourt Original", desc: "Yaourt, granola, fruits de saison, miel" },
+  "bowl-amlou-yogurt": { name: "Yaourt Amlou", desc: "Yaourt, granola, amlou, fruits de saison, miel" },
+  "bowl-chia-pudding": { name: "Pudding de Chia", desc: "Chia, granola, fruits de saison" },
+
+  "toast-avo-poached": { name: "Tartine Avocat & Œuf Poché", desc: "Avocat, œuf poché, roquette" },
+  "toast-burrata": { name: "Tartine Burrata", desc: "Burrata, tomate cerise, glaçage balsamique, noix" },
+  "toast-figtastic": { name: "Tartine Figtastic", desc: "Brie, figue, miel, noix" },
+  "toast-salmon": { name: "Tartine Saumon", desc: "Saumon, fromage à tartiner, roquette, flocons de piment" },
+
+  "bun-egg": { name: "Pain brioché Œuf", desc: "Œufs brouillés, cheddar" },
+  "bun-avo-herb": { name: "Pain brioché Avocat & Herbes", desc: "Œufs brouillés, avocat, fromage à tartiner, cheddar" },
+  "bun-woods": { name: "Pain brioché Woods", desc: "Œufs brouillés, cheddar, oignons caramélisés" },
+
+  "sandwich-tunacado": { name: "Tunacado", desc: "Avocat, mousse de thon, pesto, tomate" },
+  "sandwich-spicytuna": { name: "Spicytuna", desc: "Mousse de thon, tomate, jalapeño, tabasco, pesto" },
+  "sandwich-mozacado": { name: "Mozacado", desc: "Mozzarella, avocat, tomate, pesto" },
+  "sandwich-toast-hollandais": { name: "Toast Hollandais", desc: "Tartine à la hollandaise" },
+  "sandwich-chicken-woods": { name: "Chicken Woods", desc: "Poulet grillé, tomate, roquette, sauce maison" },
+  "sandwich-chicken-parm": { name: "Chicken Parm", desc: "Poulet grillé, aïoli, tomate, parmesan" },
+
+  "egg-fried-1": { name: "1 Œuf au Plat", desc: "Œuf au plat" },
+  "egg-fried-2": { name: "2 Œufs au Plat", desc: "Œufs au plat" },
+  "egg-fried-3": { name: "3 Œufs au Plat", desc: "Œufs au plat" },
+  "omelette-plain": { name: "Omelette Nature", desc: "Simple et moelleuse" },
+  "omelette-cheese": { name: "Omelette au Fromage", desc: "Fromage fondant" },
+  "omelette-cheese-turkey": { name: "Omelette Fromage & Dinde", desc: "Fromage et dinde" },
+  "omelette-khlie": { name: "Omelette Spéciale Khlie", desc: "Viande séchée marocaine" },
+  "omelette-tuna": { name: "Omelette Spéciale Thon", desc: "Thon" },
+  "omelette-shrimp": { name: "Omelette aux Crevettes", desc: "Crevettes sautées" },
+
+  "alacarte-chocolate-bread": { name: "Pain au Chocolat, Croissant", desc: "Viennoiseries : pain au chocolat, croissant" },
+  "alacarte-turnover": { name: "Chausson au Fromage ou aux Amandes", desc: "Feuilleté garni au fromage ou aux amandes" },
+  "alacarte-bread-plate": { name: "Assortiment de Pains avec 2 Accompagnements", desc: "Pain de blé, harcha, rghayf ou baghrir + 2 accompagnements" },
+  "alacarte-cheese-toast": { name: "Toast au Fromage", desc: "Pain toasté avec fromage" },
+  "alacarte-turkey-cheese-toast": { name: "Toast Dinde & Fromage", desc: "Pain toasté garni de dinde et fromage" },
+  "alacarte-croque-cheese": { name: "Croque Fromage", desc: "Croque garni au fromage" },
+  "alacarte-baghrir-amlou": { name: "Baghrir avec Amlou", desc: "Mini crêpes marocaines avec amlou" },
+  "alacarte-croque-turkey-cheese": { name: "Croque Dinde & Fromage", desc: "Croque garni de dinde et fromage" },
+  "alacarte-khlie-eggs": { name: "Khlie avec 2 Œufs", desc: "Viande séchée marocaine servie avec 2 œufs" },
+
+  "toast-amsterdam": { name: "Amsterdam", desc: "Toast hollandais" },
+  "toast-rotterdam": { name: "Rotterdam", desc: "Toast hollandais" },
+
+  "kids-formula-1": { name: "Formule Enfant I", desc: "Baghrir avec amlou; mini crêpes au chocolat; cornflakes; chocolat froid ou lait chaud" },
+  "kids-formula-2": { name: "Formule Enfant II", desc: "Pancake au chocolat; cornflakes; chocolat froid ou lait chaud" },
+
+  // … FR texts for the rest of your categories (entrées, plats, pastas, pizzas, etc.) are already in your data and will be used as fallback.
+};
+
+/** English culinary translations */
+const ITEMS_EN: ItemsTextPack = {
+  "matcha-latte": { name: "Matcha Latte / Iced", desc: "Ceremonial matcha, milk of choice" },
+  "matcha-coco": { name: "Coconut Matcha", desc: "Matcha blended with coconut milk" },
+  "matcha-pink-foam": { name: "Pink Foam Matcha", desc: "Matcha topped with sweet pink foam" },
+  "matcha-fraise": { name: "Strawberry Matcha", desc: "Matcha with strawberry" },
+  "matcha-mangue": { name: "Mango Matcha", desc: "Matcha with mango" },
+
+  "coffee-coco-latte": { name: "Coconut Latte", desc: "Espresso, coconut milk" },
+  "coffee-creme-brulee-latte": { name: "Crème Brûlée Latte", desc: "Silky latte with caramelized sweetness" },
+  "coffee-spanish-latte": { name: "Spanish Latte", desc: "Sweetened condensed-milk latte" },
+  "coffee-saffron-latte": { name: "Saffron Latte", desc: "Saffron infusion, velvety latte" },
+
+  "refresher-hibiscus": { name: "Hibiscus Refresher", desc: "Iced hibiscus infusion" },
+  "refresher-hibiscus-peche": { name: "Peach Hibiscus", desc: "Hibiscus with peach" },
+  "refresher-tropical-ginger": { name: "Tropical Ginger", desc: "Ginger with exotic fruits" },
+  "refresher-watermelon-fizz": { name: "Watermelon Fizz", desc: "Sparkling watermelon" },
+
+  "smoothie-multivitamine": { name: "Multivitamin", desc: "Mixed seasonal fruits" },
+  "smoothie-california-dream": { name: "California Dream", desc: "Tropical fruit blend" },
+  "smoothie-jack-special": { name: "Jack’s Special", desc: "House signature" },
+  "smoothie-coco-mango": { name: "Coco Mango", desc: "Coconut & mango" },
+  "smoothie-bananasa": { name: "Bananasa", desc: "Banana, milk of choice" },
+
+  "creamy-redbull-blueberry": { name: "Creamy Red Bull Blueberry", desc: "Energy drink, cream, blueberry" },
+  "creamy-redbull-strawberry": { name: "Creamy Red Bull Strawberry", desc: "Energy drink, cream, strawberry" },
+  "creamy-redbull-peach": { name: "Creamy Red Bull Peach", desc: "Energy drink, cream, peach" },
+
+  "drink-redbull": { name: "Red Bull", desc: "Energy drink" },
+  "drink-water-33cl": { name: "Mineral Water 33 cl" },
+  "drink-water-50cl": { name: "Mineral Water 50 cl" },
+  "drink-soda": { name: "Soft Drinks" },
+  "drink-iced-tea": { name: "Iced Tea Lemon/Peach" },
+  "drink-beer-na": { name: "Non-alcoholic Beer" },
+
+  "mojito-green": { name: "Classic Mojito (NA)", desc: "Lime, mint, sparkle" },
+  "mojito-strawberry": { name: "Strawberry Mojito (NA)", desc: "Strawberry, lime, mint" },
+  "mojito-passion": { name: "Passionfruit Mojito (NA)", desc: "Passion fruit, mint" },
+  "mojito-redbull": { name: "Red Bull Mojito (NA)", desc: "Red Bull, lime, mint" },
+  "mojito-strawberry-bull": { name: "Strawberry Bull (NA)", desc: "Red Bull, strawberry, mint" },
+  "mojito-black": { name: "Dark Mojito (NA)", desc: "Dark sugar, mint" },
+
+  "icedtea-raspberry": { name: "Raspberry Iced Tea", desc: "Cold-brew raspberry tea" },
+  "icedtea-lemon": { name: "Lemon Iced Tea", desc: "Cold-brew lemon tea" },
+
+  "mocktail-florida": { name: "Florida", desc: "Citrus, sparkle" },
+  "mocktail-bora-bora": { name: "Bora Bora", desc: "Pineapple & coconut" },
+  "mocktail-pinacolada": { name: "Piña Colada", desc: "Coconut & pineapple" },
+  "mocktail-ocean-11": { name: "Ocean 11", desc: "Blueberry & citrus" },
+
+  "juice-orange": { name: "Orange Juice", desc: "Fresh-squeezed or nectar" },
+  "juice-lemon": { name: "Lemon Juice", desc: "Fresh lemon" },
+  "juice-lemon-mint": { name: "Lemon & Mint", desc: "Lemon, mint" },
+  "juice-carrot": { name: "Carrot Juice", desc: "Fresh carrot" },
+  "juice-banana": { name: "Banana Juice", desc: "Banana, milk of choice" },
+  "juice-strawberry": { name: "Strawberry Juice", desc: "Blended strawberry" },
+  "juice-apple": { name: "Apple Juice", desc: "Sweet apple" },
+  "juice-peach": { name: "Peach Juice", desc: "Ripe peach" },
+  "juice-avocado": { name: "Avocado Juice", desc: "Creamy avocado" },
+  "juice-mango": { name: "Mango Juice", desc: "Ripe mango" },
+  "juice-pineapple": { name: "Pineapple Juice", desc: "Tropical pineapple" },
+  "juice-kiwi": { name: "Kiwi Juice", desc: "Zesty kiwi" },
+
+  "pressed-apple": { name: "Pressed Apple", desc: "Cold-pressed apple" },
+  "pressed-pineapple": { name: "Pressed Pineapple", desc: "Cold-pressed pineapple" },
+  "pressed-carrot": { name: "Pressed Carrot", desc: "Cold-pressed carrot" },
+  "pressed-pomegranate": { name: "Pressed Pomegranate", desc: "Cold-pressed pomegranate" },
+  "pressed-watermelon": { name: "Pressed Watermelon", desc: "Cold-pressed watermelon" },
+
+  "breakfast-formule-espagnole": { name: "Spanish Breakfast", desc: "2 eggs, bread basket; tomato purée, manchego, garlic oil; hot drink; mini orange juice; mineral water" },
+  "breakfast-formule-marocaine": { name: "Moroccan Breakfast", desc: "Harcha, rghayf, baghrir & wheat bread; sides (butter, cheese, honey, amlou); hot drink; mini orange juice; mineral water" },
+
+  "bowl-original-yogurt": { name: "Original Yogurt Bowl", desc: "Yogurt, granola, seasonal fruit, honey" },
+  "bowl-amlou-yogurt": { name: "Amlou Yogurt Bowl", desc: "Yogurt, granola, amlou, seasonal fruit, honey" },
+  "bowl-chia-pudding": { name: "Chia Pudding", desc: "Chia, granola, seasonal fruit" },
+
+  "toast-avo-poached": { name: "Avocado Toast & Poached Egg", desc: "Avocado, poached egg, arugula" },
+  "toast-burrata": { name: "Burrata Toast", desc: "Burrata, cherry tomatoes, balsamic glaze, walnuts" },
+  "toast-figtastic": { name: "Figtastic Toast", desc: "Brie, fig, honey, walnuts" },
+  "toast-salmon": { name: "Salmon Toast", desc: "Smoked salmon, cream cheese, arugula, chili flakes" },
+
+  "bun-egg": { name: "Brioche Bun – Egg", desc: "Soft-scrambled eggs, cheddar" },
+  "bun-avo-herb": { name: "Brioche Bun – Avo & Herbs", desc: "Scrambled eggs, avocado, cream cheese, cheddar" },
+  "bun-woods": { name: "Brioche Bun – Woods", desc: "Scrambled eggs, cheddar, caramelized onions" },
+
+  "toast-amsterdam": { name: "Amsterdam", desc: "Dutch toast" },
+  "toast-rotterdam": { name: "Rotterdam", desc: "Dutch toast" },
+
+  "kids-formula-1": { name: "Kids Set I", desc: "Baghrir with amlou; mini chocolate crêpes; cornflakes; cold chocolate or hot milk" },
+  "kids-formula-2": { name: "Kids Set II", desc: "Chocolate pancake; cornflakes; cold chocolate or hot milk" },
+};
+
+/** Dutch culinary translations */
+const ITEMS_NL: ItemsTextPack = {
+  "matcha-latte": { name: "Matcha Latte / Iced", desc: "Ceremoniële matcha, melk naar keuze" },
+  "matcha-coco": { name: "Kokos-Matcha", desc: "Matcha met kokosmelk" },
+  "matcha-pink-foam": { name: "Matcha met roze foam", desc: "Matcha met zoete roze topping" },
+  "matcha-fraise": { name: "Aardbei-Matcha", desc: "Matcha met aardbei" },
+  "matcha-mangue": { name: "Mango-Matcha", desc: "Matcha met mango" },
+
+  "coffee-coco-latte": { name: "Kokos Latte", desc: "Espresso, kokosmelk" },
+  "coffee-creme-brulee-latte": { name: "Crème-brûlée Latte", desc: "Zachte latte met gekaramelliseerde toets" },
+  "coffee-spanish-latte": { name: "Spanish Latte", desc: "Gezoete latte met gecondenseerde melk" },
+  "coffee-saffron-latte": { name: "Saffraan Latte", desc: "Saffraaninfusie, romige latte" },
+
+  "refresher-hibiscus": { name: "Hibiscus Refresher", desc: "IJskoude hibiscusinfusie" },
+  "refresher-hibiscus-peche": { name: "Perzik-Hibiscus", desc: "Hibiscus met perzik" },
+  "refresher-tropical-ginger": { name: "Tropische Gember", desc: "Gember met exotisch fruit" },
+  "refresher-watermelon-fizz": { name: "Watermeloen Fizz", desc: "Bruisende watermeloen" },
+
+  "creamy-redbull-blueberry": { name: "Romige Red Bull Blauwe Bes", desc: "Energy drink, room, blauwe bes" },
+  "creamy-redbull-strawberry": { name: "Romige Red Bull Aardbei", desc: "Energy drink, room, aardbei" },
+  "creamy-redbull-peach": { name: "Romige Red Bull Perzik", desc: "Energy drink, room, perzik" },
+
+  "drink-redbull": { name: "Red Bull", desc: "Energiedrank" },
+  "drink-water-33cl": { name: "Mineraalwater 33 cl" },
+  "drink-water-50cl": { name: "Mineraalwater 50 cl" },
+  "drink-soda": { name: "Frisdrank" },
+  "drink-iced-tea": { name: "IJsthee citroen/perzik" },
+  "drink-beer-na": { name: "Alcoholvrij bier" },
+
+  "mojito-green": { name: "Mojito Klassiek (zonder alcohol)", desc: "Limoen, munt, bruis" },
+  "mojito-strawberry": { name: "Aardbei-Mojito (zonder alcohol)", desc: "Aardbei, limoen, munt" },
+  "mojito-passion": { name: "Passievrucht-Mojito (zonder alcohol)", desc: "Passievrucht, munt" },
+  "mojito-redbull": { name: "Red Bull-Mojito (zonder alcohol)", desc: "Red Bull, limoen, munt" },
+  "mojito-strawberry-bull": { name: "Strawberry Bull (zonder alcohol)", desc: "Red Bull, aardbei, munt" },
+  "mojito-black": { name: "Donkere Mojito (zonder alcohol)", desc: "Donkere suiker, munt" },
+
+  "icedtea-raspberry": { name: "Framboos IJsthee", desc: "Koudgetrokken frambozenthee" },
+  "icedtea-lemon": { name: "Citroen IJsthee", desc: "Koudgetrokken citroenthee" },
+
+  "mocktail-florida": { name: "Florida", desc: "Citrus, bruis" },
+  "mocktail-bora-bora": { name: "Bora Bora", desc: "Ananas & kokos" },
+  "mocktail-pinacolada": { name: "Piña Colada", desc: "Kokos & ananas" },
+  "mocktail-ocean-11": { name: "Ocean 11", desc: "Blauwe bes & citrus" },
+
+  "breakfast-formule-espagnole": { name: "Spaans ontbijt", desc: "2 eieren, broodmand; tomatenpuree, manchego, knoflookolie; warme drank; mini-sinaasappelsap; mineraalwater" },
+  "breakfast-formule-marocaine": { name: "Marokkaans ontbijt", desc: "Harcha, rghayf, baghrir & tarwebrood; bijgerechten (boter, kaas, honing, amlou); warme drank; mini-sinaasappelsap; mineraalwater" },
+
+  "bowl-original-yogurt": { name: "Yoghurt Bowl – Original", desc: "Yoghurt, granola, seizoensfruit, honing" },
+  "bowl-amlou-yogurt": { name: "Yoghurt Bowl – Amlou", desc: "Yoghurt, granola, amlou, seizoensfruit, honing" },
+  "bowl-chia-pudding": { name: "Chia Pudding", desc: "Chia, granola, seizoensfruit" },
+
+  "toast-avo-poached": { name: "Avocadotoast met gepocheerd ei", desc: "Avocado, gepocheerd ei, rucola" },
+  "toast-burrata": { name: "Burrata-toast", desc: "Burrata, kerstomaat, balsamico-glazuur, walnoten" },
+  "toast-figtastic": { name: "Figtastic-toast", desc: "Brie, vijg, honing, walnoten" },
+  "toast-salmon": { name: "Zalm-toast", desc: "Gerookte zalm, roomkaas, rucola, chilivlokken" },
+
+  "bun-egg": { name: "Briochebroodje – Ei", desc: "Roerei, cheddar" },
+  "bun-avo-herb": { name: "Briochebroodje – Avo & Kruiden", desc: "Roerei, avocado, smeerkaas, cheddar" },
+  "bun-woods": { name: "Briochebroodje – Woods", desc: "Roerei, cheddar, gekaramelliseerde ui" },
+
+  "toast-amsterdam": { name: "Amsterdam", desc: "Hollandse toast" },
+  "toast-rotterdam": { name: "Rotterdam", desc: "Hollandse toast" },
+
+  "kids-formula-1": { name: "Kids Menu I", desc: "Baghrir met amlou; mini chocoladecrêpes; cornflakes; koude choco of warme melk" },
+  "kids-formula-2": { name: "Kids Menu II", desc: "Chocolade-pannenkoek; cornflakes; koude choco of warme melk" },
+};
+
+/* ============================================================================
+   5) Language registry (category/sub labels + item maps)
+   ========================================================================== */
+const LANGS: Record<LangKey, {
+  ui: typeof UI["fr"];
+  categories: Record<CategoryId, string>;
+  subcats: Record<string, string>;
+  items: ItemsTextPack;
+}> = {
+  fr: { ui: UI.fr, categories: CAT_LABELS.fr, subcats: SUB_LABELS.fr, items: ITEMS_FR },
+  en: { ui: UI.en, categories: CAT_LABELS.en, subcats: SUB_LABELS.en, items: ITEMS_EN },
+  nl: { ui: UI.nl, categories: CAT_LABELS.nl, subcats: SUB_LABELS.nl, items: ITEMS_NL },
+};
+
+/* ============================================================================
+   6) Language-neutral MENU ITEMS (ids + price + grouping only)
+   - This block mirrors your data, trimmed to keep the example concise.
+   - Add/keep the rest of your items here — display text comes from LANGS.
+   ========================================================================== */
+export const MENU_ITEMS: MenuItem[] = [
+  // ——— Drinks
+  { id: "matcha-latte", price: 45, category: "drinks", subcategory: "Matcha" },
+  { id: "matcha-coco", price: 65, category: "drinks", subcategory: "Matcha" },
+  { id: "matcha-pink-foam", price: 60, category: "drinks", subcategory: "Matcha" },
+  { id: "matcha-fraise", price: 55, category: "drinks", subcategory: "Matcha" },
+  { id: "matcha-mangue", price: 55, category: "drinks", subcategory: "Matcha" },
+
+  { id: "coffee-coco-latte", price: 60, category: "drinks", subcategory: "Café & Spécialités" },
+  { id: "coffee-creme-brulee-latte", price: 65, category: "drinks", subcategory: "Café & Spécialités" },
+  { id: "coffee-spanish-latte", price: 50, category: "drinks", subcategory: "Café & Spécialités" },
+  { id: "coffee-saffron-latte", price: 65, category: "drinks", subcategory: "Café & Spécialités" },
+
+  { id: "refresher-hibiscus", price: 49, category: "drinks", subcategory: "Rafraîchissants" },
+  { id: "refresher-hibiscus-peche", price: 49, category: "drinks", subcategory: "Rafraîchissants" },
+  { id: "refresher-tropical-ginger", price: 45, category: "drinks", subcategory: "Rafraîchissants" },
+  { id: "refresher-watermelon-fizz", price: 45, category: "drinks", subcategory: "Rafraîchissants" },
+
+  { id: "smoothie-multivitamine", price: null, category: "drinks", subcategory: "Smoothies" },
+  { id: "smoothie-california-dream", price: null, category: "drinks", subcategory: "Smoothies" },
+  { id: "smoothie-jack-special", price: null, category: "drinks", subcategory: "Smoothies" },
+  { id: "smoothie-coco-mango", price: null, category: "drinks", subcategory: "Smoothies" },
+  { id: "smoothie-bananasa", price: null, category: "drinks", subcategory: "Smoothies" },
+
+  { id: "creamy-redbull-blueberry", price: 50, category: "drinks", subcategory: "Redbull Crémeux" },
+  { id: "creamy-redbull-strawberry", price: 50, category: "drinks", subcategory: "Redbull Crémeux" },
+  { id: "creamy-redbull-peach", price: 50, category: "drinks", subcategory: "Redbull Crémeux" },
+
+  { id: "drink-water-33cl", price: 8, category: "drinks", subcategory: "Boissons fraîches" },
+  { id: "drink-water-50cl", price: 12, category: "drinks", subcategory: "Boissons fraîches" },
+  { id: "drink-soda", price: 22, category: "drinks", subcategory: "Boissons fraîches" },
+  { id: "drink-iced-tea", price: 28, category: "drinks", subcategory: "Boissons fraîches" },
+  { id: "drink-beer-na", price: 35, category: "drinks", subcategory: "Boissons fraîches" },
+  { id: "drink-redbull", price: 35, category: "drinks", subcategory: "Boissons fraîches" },
+
+  { id: "mojito-green", price: 45, category: "drinks", subcategory: "Mojitos" },
+  { id: "mojito-strawberry", price: 45, category: "drinks", subcategory: "Mojitos" },
+  { id: "mojito-passion", price: 50, category: "drinks", subcategory: "Mojitos" },
+  { id: "mojito-redbull", price: 55, category: "drinks", subcategory: "Mojitos" },
+  { id: "mojito-strawberry-bull", price: 60, category: "drinks", subcategory: "Mojitos" },
+  { id: "mojito-black", price: 50, category: "drinks", subcategory: "Mojitos" },
+
+  { id: "icedtea-raspberry", price: 38, category: "drinks", subcategory: "Thés glacés" },
+  { id: "icedtea-lemon", price: 38, category: "drinks", subcategory: "Thés glacés" },
+
+  { id: "mocktail-florida", price: 40, category: "drinks", subcategory: "Cocktails sans alcool" },
+  { id: "mocktail-bora-bora", price: 40, category: "drinks", subcategory: "Cocktails sans alcool" },
+  { id: "mocktail-pinacolada", price: 50, category: "drinks", subcategory: "Cocktails sans alcool" },
+  { id: "mocktail-ocean-11", price: 45, category: "drinks", subcategory: "Cocktails sans alcool" },
+
+  { id: "juice-orange", price: 30, category: "drinks", subcategory: "Jus" },
+  { id: "juice-lemon", price: 30, category: "drinks", subcategory: "Jus" },
+  { id: "juice-lemon-mint", price: 32, category: "drinks", subcategory: "Jus" },
+  { id: "juice-carrot", price: 33, category: "drinks", subcategory: "Jus" },
+  { id: "juice-banana", price: 40, category: "drinks", subcategory: "Jus" },
+  { id: "juice-strawberry", price: 40, category: "drinks", subcategory: "Jus" },
+  { id: "juice-apple", price: 40, category: "drinks", subcategory: "Jus" },
+  { id: "juice-peach", price: 42, category: "drinks", subcategory: "Jus" },
+  { id: "juice-avocado", price: 45, category: "drinks", subcategory: "Jus" },
+  { id: "juice-mango", price: 45, category: "drinks", subcategory: "Jus" },
+  { id: "juice-pineapple", price: 45, category: "drinks", subcategory: "Jus" },
+  { id: "juice-kiwi", price: 45, category: "drinks", subcategory: "Jus" },
+
+  { id: "pressed-apple", price: 50, category: "drinks", subcategory: "Jus pressés" },
+  { id: "pressed-pineapple", price: 65, category: "drinks", subcategory: "Jus pressés" },
+  { id: "pressed-carrot", price: 45, category: "drinks", subcategory: "Jus pressés" },
+  { id: "pressed-pomegranate", price: 55, category: "drinks", subcategory: "Jus pressés" },
+  { id: "pressed-watermelon", price: 45, category: "drinks", subcategory: "Jus pressés" },
+
+  // ——— Breakfast highlights (add the rest of your items the same way)
+  { id: "breakfast-formule-espagnole", price: 80, category: "breakfast", subcategory: "Espagnol" },
+  { id: "breakfast-formule-marocaine", price: 70, category: "breakfast", subcategory: "Marocaine" },
+  { id: "bowl-original-yogurt", price: 50, category: "breakfast", subcategory: "Bols" },
+  { id: "bowl-amlou-yogurt", price: 55, category: "breakfast", subcategory: "Bols" },
+  { id: "bowl-chia-pudding", price: 60, category: "breakfast", subcategory: "Bols" },
+  { id: "toast-avo-poached", price: 60, category: "breakfast", subcategory: "Tartines" },
+  { id: "toast-burrata", price: 50, category: "breakfast", subcategory: "Tartines" },
+  { id: "toast-figtastic", price: 70, category: "breakfast", subcategory: "Tartines" },
+  { id: "toast-salmon", price: 75, category: "breakfast", subcategory: "Tartines" },
+  { id: "bun-egg", price: 40, category: "breakfast", subcategory: "Petits pains briochés" },
+  { id: "bun-avo-herb", price: 55, category: "breakfast", subcategory: "Petits pains briochés" },
+  { id: "bun-woods", price: 45, category: "breakfast", subcategory: "Petits pains briochés" },
+  { id: "toast-amsterdam", price: 36, category: "breakfast", subcategory: "Toast Hollandais" },
+  { id: "toast-rotterdam", price: 42, category: "breakfast", subcategory: "Toast Hollandais" },
+  { id: "kids-formula-1", price: 40, category: "breakfast", subcategory: "Formules Enfants" },
+  { id: "kids-formula-2", price: 45, category: "breakfast", subcategory: "Formules Enfants" },
+
+  // … keep adding the rest of your categories here (entrées, plats, pastas, pizzas, etc.)
+];
+
+/* ============================================================================
+   7) Icons per category (order controls the “All” section order)
+   ========================================================================== */
+const CATEGORY_META = [
+  { id: "drinks", icon: Coffee },
+  { id: "breakfast", icon: Sandwich },
+  { id: "entrees", icon: Soup },
+  { id: "plats", icon: Salad },
+  { id: "pastas", icon: Soup },
+  { id: "pizzas", icon: Pizza },
+  { id: "aperitifs", icon: Sandwich },
+  { id: "burgers", icon: Sandwich },
+  { id: "crepes_savory", icon: Sandwich },
+  { id: "tacos", icon: Sandwich },
+  { id: "sandwiches", icon: Sandwich },
+  { id: "panini", icon: Sandwich },
+  { id: "sweets_crepes_gaufres_pancakes", icon: IceCream },
+  { id: "desserts", icon: IceCream },
+] as const;
+
+/* ============================================================================
+   8) Utilities
+   ========================================================================== */
+function cx(...list: (string | false | undefined)[]) {
+  return list.filter(Boolean).join(" ");
+}
+function useQueryParam(key: string) {
+  const [val, setVal] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    setVal(u.searchParams.get(key));
+  }, []);
+  return val;
+}
+function firstImageFor(items: MenuItem[] = [], categoryId?: string) {
+  const found = items.find((i) => i.image)?.image;
+  if (found) return found;
+  return "https://picsum.photos/seed/woods_feature/1200/800";
+}
+
+/** i18n helpers */
+function useI18n(initial?: LangKey) {
+  const qp = (useQueryParam("lang") as LangKey | null) || null;
+  const [lang, setLang] = useState<LangKey>(initial || qp || "fr");
+  const reg = LANGS[lang] || LANGS.fr;
+
+  // Text resolver with FR fallback
+  function tItem(id: string): ItemText {
+    return reg.items[id] || LANGS.fr.items[id] || { name: id };
+  }
+  function tCategory(id: CategoryId) {
+    return reg.categories[id] || LANGS.fr.categories[id] || id;
+  }
+  function tSubcat(raw?: string) {
+    if (!raw) return "";
+    return reg.subcats[raw] || LANGS.fr.subcats[raw] || raw;
+  }
+
+  return { lang, setLang, dict: reg.ui, tItem, tCategory, tSubcat };
+}
+
+/* ============================================================================
+   9) Main component
+   ========================================================================== */
+export default function WoodsSite() {
+  const { lang, setLang, dict, tItem, tCategory, tSubcat } = useI18n();
+  const [route, setRoute] = useState<"menu" | "about" | "gallery">("menu");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState<string>("all");
+
+  // Filter + search
+  const filteredItems = useMemo(() => {
+    let items = MENU_ITEMS;
+    if (activeCat !== "all") {
+      items = items.filter((i) => i.category === (activeCat as CategoryId));
+    }
+    if (query) {
+      const q = query.toLowerCase();
+      items = items.filter((i) => {
+        const txt = tItem(i.id);
+        const s = (txt.name + " " + (txt.desc || "") + " " + (tSubcat(i.subcategory) || "")).toLowerCase();
+        return s.includes(q);
+      });
+    }
+    return items;
+  }, [activeCat, query, tItem, tSubcat]);
+
+  // Group: category -> subcategory -> items[]
+  const grouped = useMemo(() => {
+    const byCat: Record<string, Record<string, MenuItem[]>> = {};
+    for (const item of filteredItems) {
+      const cat = item.category;
+      const sub = item.subcategory || "_";
+      (byCat[cat] ||= {});
+      (byCat[cat][sub] ||= []).push(item);
+    }
+    return byCat;
+  }, [filteredItems]);
+
+  // Language picker gate (first load only)
+  const [showGate, setShowGate] = useState(false);
+  useEffect(() => {
+    // Show the language gate if no explicit query param is present
+    if (typeof window !== "undefined") {
+      const u = new URL(window.location.href);
+      if (!u.searchParams.get("lang")) setShowGate(true);
+    }
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-clay/80 text-neutral-100">
+      <div
+        className="pointer-events-none fixed inset-0 bg-cover bg-center opacity-10"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1487730116645-74489c95b41b?q=80&w=1800&auto=format&fit=crop')",
+        }}
+      />
+
+      {/* Header */}
+      <header className="sticky top-0 z-40 backdrop-blur-lg bg-clay border-b border-white/10">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open Menu"
+            className="rounded-xl p-2 hover:bg-mist/80 border border-white/10"
+          >
+            <MenuIcon className="w-5 h-5" />
+          </button>
+          <div className="font-semibold tracking-tight text-xl sm:text-2xl">{dict.brand}</div>
+          <div className="ml-auto flex items-center gap-2">
+            <button onClick={() => setRoute("about")} className="hidden sm:inline-flex px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 text-sm">{dict.about}</button>
+            <button onClick={() => setRoute("menu")} className="hidden sm:inline-flex px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 text-sm">{dict.menu}</button>
+            <button onClick={() => setRoute("gallery")} className="hidden sm:inline-flex px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 text-sm">{dict.gallery}</button>
+          </div>
+        </div>
+      </header>
+
+      {/* Drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.aside
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 280, damping: 28 }}
+            className="fixed top-0 inset-y-0 right-0 w-80 bg-clay/40 backdrop-blur-xl border-l border-white/10 z-50"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="font-semibold">{dict.brand}</div>
+              <button onClick={() => setMenuOpen(false)} className="rounded-lg p-2 hover:bg-white/10">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <nav className="p-2">
+              <DrawerLink icon={Info} label={dict.about} onClick={() => { setRoute("about"); setMenuOpen(false); }} />
+              <DrawerLink icon={Images} label={dict.gallery} onClick={() => { setRoute("gallery"); setMenuOpen(false); }} />
+              <DrawerLink icon={CupSoda} label={dict.menu} onClick={() => { setRoute("menu"); setMenuOpen(false); }} />
+
+              <div className="mt-4 px-2 text-xs uppercase tracking-wider text-white/50">Language</div>
+              <div className="p-2 flex gap-2">
+                {(["fr", "en", "nl"] as LangKey[]).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    className={cx(
+                      "px-3 py-1.5 rounded-full border text-sm",
+                      lang === l ? "bg-seafoam text-black border-seafoam" : "border-white/20 hover:bg-white/10"
+                    )}
+                  >
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Main */}
+      <main className="relative mx-auto max-w-6xl px-4">
+        <AnimatePresence mode="wait">
+          {route === "menu" && (
+            <motion.section
+              key="menu"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="py-6"
+            >
+              {/* Search */}
+              <div className="flex gap-3 items-center">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={dict.search}
+                    className="w-full h-12 pl-9 pr-3 rounded-2xl border border-white/20 bg-white/10 placeholder-white/40 outline-none focus:ring-2 focus:ring-seafoam"
+                  />
+                </div>
+              </div>
+
+              {/* Category chips */}
+              <div className="mt-4 overflow-x-auto pb-2">
+                <div className="flex gap-2 min-w-max">
+                  <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")} label={dict.all} />
+                  {CATEGORY_META.map(({ id, icon: Icon }) => (
+                    <CategoryChip
+                      key={id}
+                      active={activeCat === id}
+                      onClick={() => setActiveCat(id)}
+                      label={tCategory(id as CategoryId)}
+                      icon={<Icon className="w-4 h-4" />}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* “All” view renders each category section */}
+              {activeCat === "all" ? (
+                <div className="mt-6 space-y-10">
+                  {CATEGORY_META.map(({ id }) => {
+                    const subMap = grouped[id] || undefined;
+                    if (!subMap) return null;
+                    const subs = Object.keys(subMap);
+                    const itemsFlat = Object.values(subMap).flat();
+                    return (
+                      <section key={`cat-${id}`}>
+                        <header className="flex items-baseline justify-between mb-3">
+                          <h3 className="text-xl font-semibold">{tCategory(id as CategoryId)}</h3>
+                          <span className="text-sm text-white/60">{dict.itemsCount(itemsFlat.length)}</span>
+                        </header>
+
+                        <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur">
+                          <img
+                            src={firstImageFor(itemsFlat, id)}
+                            alt={tCategory(id as CategoryId)}
+                            className="w-full h-40 object-cover md:h-56"
+                            loading="lazy"
+                          />
+                        </div>
+
+                        <div className="mt-4 space-y-4">
+                          {subs.map((raw) => {
+                            const items = subMap[raw] || [];
+                            const sub = tSubcat(raw);
+                            return (
+                              <motion.article
+                                key={`${id}-${raw}`}
+                                whileHover={{ y: -2 }}
+                                className="rounded-3xl border border-driftwood/30 bg-mist text-clay shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+                              >
+                                /* CONTINUATION FROM THE EXACT STOP POINT */
+                                <header className="px-4 pt-4 pb-2 flex items-baseline justify-between">
+                                  <h4 className="text-base font-semibold">{sub}</h4>
+                                  <span className="text-xs text-black/50">{items.length}</span>
+                                </header>
+
+                                <div className="px-2 pb-3">
+                                  <ul className="divide-y divide-black/10">
+                                    {items.map((it) => {
+                                      const txt = tItem(it.id);
+                                      return (
+                                        <ItemRow
+                                          key={it.id}
+                                          title={txt.name}
+                                          desc={txt.desc}
+                                          price={it.price}
+                                          priceFmt={dict.priceMAD}
+                                        />
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              </motion.article>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              ) : (
+                // Single category view
+                <div className="mt-6 space-y-6">
+                  {Object.entries(grouped[activeCat] || {}).map(([raw, items]) => (
+                    <section key={`${activeCat}-${raw}`}>
+                      <header className="flex items-baseline justify-between mb-3">
+                        <h3 className="text-xl font-semibold">{tSubcat(raw)}</h3>
+                        <span className="text-sm text-white/60">{dict.itemsCount(items.length)}</span>
+                      </header>
+                      <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur">
+                        <img
+                          src={firstImageFor(items, activeCat)}
+                          alt={tCategory(activeCat as CategoryId)}
+                          className="w-full h-40 object-cover md:h-56"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="mt-3 rounded-3xl border border-driftwood/30 bg-mist text-clay">
+                        <ul className="divide-y divide-black/10">
+                          {items.map((it) => {
+                            const txt = tItem(it.id);
+                            return (
+                              <ItemRow
+                                key={it.id}
+                                title={txt.name}
+                                desc={txt.desc}
+                                price={it.price}
+                                priceFmt={dict.priceMAD}
+                              />
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </motion.section>
+          )}
+
+          {route === "about" && (
+            <motion.section
+              key="about"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="py-10 max-w-3xl mx-auto"
+            >
+              <h2 className="text-2xl font-semibold mb-3">{dict.storyTitle}</h2>
+              <p className="text-white/80 leading-relaxed">{dict.story}</p>
+            </motion.section>
+          )}
+
+          {route === "gallery" && (
+            <motion.section
+              key="gallery"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="py-6"
+            >
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={`https://picsum.photos/seed/woods_${i}/800/600`}
+                      alt="WOODS gallery"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Language gate (first visit) */}
+      {showGate && (
+        <LangGate
+          current={lang}
+          onClose={() => setShowGate(false)}
+          onPick={(l) => {
+            setLang(l);
+            setShowGate(false);
+          }}
+        />
+      )}
+
+      {/* Footer */}
+      <footer className="mt-12 pb-12 text-center text-xs text-white/50">
+        © {new Date().getFullYear()} {dict.brand}
+      </footer>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   10) Reusable bits
+   =========================================================================*/
+function ItemRow({
+  title,
+  desc,
+  price,
+  priceFmt,
+}: {
+  title: string;
+  desc?: string;
+  price: number | null | undefined;
+  priceFmt: (v: number) => string;
+}) {
+  return (
+    <li className="flex items-start gap-3 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <div className="font-medium leading-tight truncate">{title}</div>
+        {desc ? (
+          <div className="text-sm text-black/60 leading-snug line-clamp-2">{desc}</div>
+        ) : null}
+      </div>
+      <div className="shrink-0 pl-2 font-semibold tracking-tight">
+        {typeof price === "number" ? priceFmt(price) : <span className="text-black/40">—</span>}
+      </div>
+    </li>
+  );
+}
+
+function CategoryChip({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  label: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cx(
+        "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition",
+        active ? "bg-seafoam text-black border-seafoam" : "border-white/20 hover:bg-white/10"
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function DrawerLink({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/10"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="w-4 h-4" />
+        <span className="text-sm">{label}</span>
+      </div>
+      <ChevronRight className="w-4 h-4 opacity-60" />
+    </button>
+  );
+}
+
+function LangGate({
+  current,
+  onPick,
+  onClose,
+}: {
+  current: LangKey;
+  onPick: (l: LangKey) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm">
+      <div className="w-[92vw] max-w-md rounded-3xl border border-white/10 bg-clay p-5 shadow-xl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-semibold">Language</div>
+          <button onClick={onClose} className="rounded-lg p-2 hover:bg-white/10">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-sm text-white/70 mb-4">Select your preferred language.</p>
+        <div className="grid grid-cols-3 gap-2">
+          {(["fr", "en", "nl"] as LangKey[]).map((l) => (
+            <button
+              key={l}
+              onClick={() => onPick(l)}
+              className={cx(
+                "rounded-xl px-4 py-3 border text-center",
+                current === l ? "bg-seafoam text-black border-seafoam" : "border-white/20 hover:bg-white/10"
+              )}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

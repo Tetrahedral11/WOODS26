@@ -1,0 +1,12 @@
+/* app/globals.css */
+@import "tailwindcss";
+
+/* Tailwind v4 theme tokens */
+@theme {
+  --color-black: #2C2D2D;
+  --color-clay: #5E4B40;      /* amber Brown */
+  --color-driftwood: #CBB9A5; /* Warm tan */
+  --color-beige: #E8D9C6;     /* Sunset Beige */
+  --color-seafoam: #AABCA4;   /* Soft green accent */
+  --color-mist: #F5F3EF;      /* Background */
+}
