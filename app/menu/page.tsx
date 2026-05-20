@@ -3806,6 +3806,7 @@ export default function WoodsSite() {
                             <ul className="divide-y divide-black/10">
                               {items.map((it) => {
                                 const txt = tItem(it.id);
+                                const frTxt = LANGS.fr.items[it.id];
                                 return (
                                   <ItemRow
                                     key={it.id}
@@ -3813,6 +3814,7 @@ export default function WoodsSite() {
                                     desc={txt.desc}
                                     price={it.price}
                                     priceFmt={dict.priceMAD}
+                                    frName={frTxt?.name}
                                   />
                                 );
                               })}
@@ -3874,6 +3876,7 @@ export default function WoodsSite() {
                             <ul className="divide-y divide-black/10">
                               {items.map((it: MenuItem) => {
                                 const txt = tItem(it.id);
+                                const frTxt = LANGS.fr.items[it.id];
                                 return (
                                   <ItemRow
                                     key={it.id}
@@ -3881,6 +3884,7 @@ export default function WoodsSite() {
                                     desc={txt.desc}
                                     price={it.price}
                                     priceFmt={dict.priceMAD}
+                                    frName={frTxt?.name}
                                   />
                                 );
                               })}
@@ -4030,16 +4034,21 @@ function ItemRow({
   desc,
   price,
   priceFmt,
+  frName,
 }: {
   title: string;
   desc?: string;
   price: number | null | undefined;
   priceFmt: (v: number) => string;
+  frName?: string;
 }) {
   return (
     <li className="flex items-start gap-3 px-4 py-3">
       <div className="flex-1 min-w-0">
         <div className="font-medium leading-tight truncate">{title}</div>
+        {frName && frName !== title ? (
+          <div className="text-xs text-black/40 leading-tight italic truncate">{frName}</div>
+        ) : null}
         {desc ? <div className="text-sm text-black/60 leading-snug line-clamp-2">{desc}</div> : null}
       </div>
       <div className="shrink-0 pl-2 font-semibold tracking-tight">
