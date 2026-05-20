@@ -3918,8 +3918,8 @@ export default function WoodsSite() {
               className="w-full max-w-md rounded-3xl border border-mist/20 bg-clay/30 p-6 shadow-2xl text-black text-center"
             >
               {/* 🔹 Logo centered */}
-              <div className="flex justify-center mb-4">
-                <Image src="/woods-logo.svg" alt="WOODS Logo" width={96} height={32} priority />
+              <div className="flex justify-center mb-2">
+                <Image src="/woods-logo.svg" alt="WOODS Logo" width={60} height={20} priority />
               </div>
 
               {/* Heading */}
