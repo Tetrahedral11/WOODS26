@@ -3607,7 +3607,7 @@ export default function WoodsSite() {
                       key={l}
                       onClick={() => setLang(l)}
                       className={cx(
-                        "flex-1 px-3 py-1.5 rounded-full border text-sm",
+                        "w-12 py-1.5 rounded-full border text-sm text-center",
                         lang === l
                         ? "bg-seafoam text-black border-seafoam"
                         : "border-white/20 hover:bg-white/10"
@@ -3623,7 +3623,7 @@ export default function WoodsSite() {
                       key={l}
                       onClick={() => setLang(l)}
                       className={cx(
-                        "px-3 py-1.5 rounded-full border text-sm",
+                        "w-12 py-1.5 rounded-full border text-sm text-center",
                         lang === l
                         ? "bg-seafoam text-black border-seafoam"
                         : "border-white/20 hover:bg-white/10"
@@ -3919,7 +3919,7 @@ export default function WoodsSite() {
             >
               {/* 🔹 Logo centered */}
               <div className="flex justify-center mb-4">
-                <Image src="/woods-logo.svg" alt="WOODS Logo" width={120} height={40} priority />
+                <Image src="/woods-logo.svg" alt="WOODS Logo" width={96} height={32} priority />
               </div>
 
               {/* Heading */}
@@ -3991,7 +3991,7 @@ export default function WoodsSite() {
       </footer>
 
       {/* Floating Google Review Button */}
-      <a
+      {!menuOpen && <a
         href="https://g.page/r/CWmPzYDdnzw5EAE/review"
         target="_blank"
         rel="noopener noreferrer"
@@ -4005,7 +4005,7 @@ export default function WoodsSite() {
           <path fill="#34A853" d="M24 47c5.5 0 10.12-1.82 13.49-4.94l-7.1-5.52C28.6 38.42 26.41 39.5 24 39.5c-6.22 0-11.5-4.09-13.26-9.74l-7.1 5.52C7.07 43.52 14.82 47 24 47z"/>
         </svg>
         ⭐ Leave a Review
-      </a>
+      </a>}
     </div>
   );
 }
