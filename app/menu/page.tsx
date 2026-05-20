@@ -23,7 +23,7 @@ import Image from "next/image";
 /* ============================================================================
    1) Types
    ========================================================================== */
-type LangKey = "fr" | "en" | "nl" | "es" | "zh";
+type LangKey = "fr" | "en" | "nl" | "es" | "zh" | "de" | "ar";
 
 type CategoryId =
   | "drinks"
@@ -124,6 +124,33 @@ const UI: Record<LangKey, { rtl?: boolean; brand: string; chooseLanguage:  strin
     priceMAD: (v) => `${v} MAD`,
   },
 
+  de: {
+    brand: "WOODS",
+    chooseLanguage: "Sprache wählen",
+    menu: "Unsere Speisekarte",
+    search: "Gerichte, Zutaten suchen…",
+    clearSearch: "Suche löschen",
+    storyTitle: "Unsere Geschichte",
+    story: "Bei WOODS verbinden wir marokkanische Wärme mit modernem Handwerk. Saisonale, lokale Zutaten — mit Sorgfalt zubereitet.",
+    all: "Alle",
+    itemsCount: (n) => `${n}`,
+    priceMAD: (v) => `${v} MAD`,
+  },
+
+  ar: {
+    rtl: true,
+    brand: "WOODS",
+    chooseLanguage: "اختر لغتك",
+    menu: "قائمة الطعام",
+    search: "ابحث عن الأطباق والمكونات…",
+    clearSearch: "مسح البحث",
+    storyTitle: "قصتنا",
+    story: "في WOODS، نمزج دفء المغرب مع الإبداع العصري. منتجات موسمية ومحلية، مُعدَّة بعناية واحترام.",
+    all: "الكل",
+    itemsCount: (n) => `${n}`,
+    priceMAD: (v) => `${v} درهم`,
+  },
+
 };
 
 /* ============================================================================
@@ -210,6 +237,38 @@ const CAT_LABELS: Record<LangKey, Record<CategoryId, string>> = {
     panini: "帕尼尼",
     sweets_crepes_gaufres_pancakes: "甜可丽饼与华夫饼",
     desserts: "甜点",
+  },
+  de: {
+    drinks: "Getränke",
+    breakfast: "Frühstück",
+    entrees: "Vorspeisen",
+    plats: "Hauptgerichte",
+    pastas: "Pasta",
+    pizzas: "Pizzen",
+    aperitifs: "Aperitifs",
+    burgers: "Burger",
+    crepes_savory: "Herzhafte Crêpes",
+    tacos: "Tacos",
+    sandwiches: "Sandwiches",
+    panini: "Panini",
+    sweets_crepes_gaufres_pancakes: "Süße Crêpes & Waffeln",
+    desserts: "Desserts",
+  },
+  ar: {
+    drinks: "المشروبات",
+    breakfast: "الإفطار",
+    entrees: "المقبلات",
+    plats: "الأطباق الرئيسية",
+    pastas: "المعكرونة",
+    pizzas: "البيتزا",
+    aperitifs: "فاتح الشهية",
+    burgers: "البرغر",
+    crepes_savory: "كريب مالح",
+    tacos: "تاكو",
+    sandwiches: "السندويشات",
+    panini: "بانيني",
+    sweets_crepes_gaufres_pancakes: "كريب حلو وغوفر",
+    desserts: "الحلويات",
   },
 };
 
@@ -439,6 +498,96 @@ const SUB_LABELS: Record<LangKey, Record<string, string>> = {
     "freakshake": "怪兽奶昔",
     "Coupes glacées": "冰淇淋杯",
     "Composez Votre Glace": "自制冰淇淋",
+  },
+  de: {
+    "Matcha": "Matcha",
+    "Café & Spécialités": "Kaffee & Spezialitäten",
+    "Nos Thé": "Unsere Tees",
+    "Boissons Chaudes": "Warme Getränke",
+    "Rafraîchissants": "Erfrischungen",
+    "Smoothies": "Smoothies",
+    "Redbull Crémeux": "Cremiger Red Bull",
+    "Boissons fraîches": "Kalte Getränke",
+    "Mojitos": "Mojitos (alkoholfrei)",
+    "Thés glacés": "Eistees",
+    "Cocktails sans alcool": "Mocktails",
+    "Jus": "Säfte",
+    "Jus pressés": "Frisch gepresste Säfte",
+
+    "Espagnol": "Spanisches Menü",
+    "Marocaine": "Marokkanisches Menü",
+    "Bols": "Bowls",
+    "Tartines": "Offene Toasts",
+    "Petits pains briochés": "Brioche-Brötchen",
+    "Sandwichs": "Sandwiches",
+    "Œufs": "Eier",
+    "À la Carte": "À la carte",
+    "Toast Hollandais": "Holländischer Toast",
+    "Formules Enfants": "Kindermenü",
+
+    "Entrées Froides": "Kalte Vorspeisen",
+    "Entrées Chaudes": "Warme Vorspeisen",
+    "À Base Poisson": "Fisch",
+    "À Base Viande & Poulet": "Fleisch & Hähnchen",
+    "Marocains": "Marokkanisch",
+    "Bagels": "Bagels",
+    "Risotto": "Risotto",
+    "Sides": "Beilagen",
+    "Tartes": "Tartes",
+
+    "Crêpes Salées": "Herzhafte Crêpes",
+    "Crêpes & Gauffres": "Crêpes & Waffeln",
+    "Pancake": "Pancakes",
+
+    "Frappuccino": "Frappuccino",
+    "freakshake": "Freakshake",
+    "Coupes glacées": "Eisbecher",
+    "Composez Votre Glace": "Eigenes Eis zusammenstellen",
+  },
+  ar: {
+    "Matcha": "ماتشا",
+    "Café & Spécialités": "القهوة والمشروبات الخاصة",
+    "Nos Thé": "شاياتنا",
+    "Boissons Chaudes": "المشروبات الساخنة",
+    "Rafraîchissants": "المشروبات المنعشة",
+    "Smoothies": "سموذي",
+    "Redbull Crémeux": "ريد بول كريمي",
+    "Boissons fraîches": "المشروبات الباردة",
+    "Mojitos": "موهيتو (بدون كحول)",
+    "Thés glacés": "الشاي المثلج",
+    "Cocktails sans alcool": "موكتيل",
+    "Jus": "عصائر",
+    "Jus pressés": "عصائر طازجة",
+
+    "Espagnol": "وجبة إسبانية",
+    "Marocaine": "وجبة مغربية",
+    "Bols": "بولز",
+    "Tartines": "توست مفتوح",
+    "Petits pains briochés": "خبز بريوش",
+    "Sandwichs": "سندويشات",
+    "Œufs": "بيض",
+    "À la Carte": "à la carte",
+    "Toast Hollandais": "توست هولندي",
+    "Formules Enfants": "قائمة الأطفال",
+
+    "Entrées Froides": "مقبلات باردة",
+    "Entrées Chaudes": "مقبلات ساخنة",
+    "À Base Poisson": "أسماك",
+    "À Base Viande & Poulet": "لحم ودجاج",
+    "Marocains": "مغربي",
+    "Bagels": "بيغل",
+    "Risotto": "ريزوتو",
+    "Sides": "مرافقات",
+    "Tartes": "تارت",
+
+    "Crêpes Salées": "كريب مالح",
+    "Crêpes & Gauffres": "كريب وغوفر",
+    "Pancake": "بانكيك",
+
+    "Frappuccino": "فرابوتشينو",
+    "freakshake": "فريك شيك",
+    "Coupes glacées": "أكواب آيس كريم",
+    "Composez Votre Glace": "تكوين آيس كريمك",
   },
 };
 
@@ -2125,6 +2274,8 @@ const LANGS: Record<LangKey, {
   nl: { ui: UI.nl, categories: CAT_LABELS.nl, subcats: SUB_LABELS.nl, items: ITEMS_NL },
   es: { ui: UI.es, categories: CAT_LABELS.es, subcats: SUB_LABELS.es, items: ITEMS_ES },
   zh: { ui: UI.zh, categories: CAT_LABELS.zh, subcats: SUB_LABELS.zh, items: ITEMS_ZH },
+  de: { ui: UI.de, categories: CAT_LABELS.de, subcats: SUB_LABELS.de, items: {} },
+  ar: { ui: UI.ar, categories: CAT_LABELS.ar, subcats: SUB_LABELS.ar, items: {} },
 };
 
 /* ============================================================================
@@ -2632,7 +2783,7 @@ export default function WoodsSite() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-clay/60 text-neutral-100">
+    <div className="min-h-screen bg-clay/60 text-neutral-100" dir={dict.rtl ? "rtl" : "ltr"}>
    
 
       {/* Header */}
@@ -2722,7 +2873,7 @@ export default function WoodsSite() {
                 Language
               </div>
               <div className="p-2 flex gap-2">
-                {(["fr", "en", "nl", "es", "zh"] as LangKey[]).map((l) => (
+                {(["ar", "fr", "en", "de", "nl", "es", "zh"] as LangKey[]).map((l) => (
                   <button
                     key={l}
                     onClick={() => setLang(l)}
@@ -3034,9 +3185,9 @@ export default function WoodsSite() {
               {/* Language buttons */}
               <div className="mt-4 grid grid-cols-1 gap-2">
                 <LangBtn
-                  label="English"
+                  label="العربية"
                   onClick={() => {
-                    setLang("en");
+                    setLang("ar");
                     setShowGate(false);
                   }}
                 />
@@ -3044,6 +3195,20 @@ export default function WoodsSite() {
                   label="Français"
                   onClick={() => {
                     setLang("fr");
+                    setShowGate(false);
+                  }}
+                />
+                <LangBtn
+                  label="English"
+                  onClick={() => {
+                    setLang("en");
+                    setShowGate(false);
+                  }}
+                />
+                <LangBtn
+                  label="Deutsch"
+                  onClick={() => {
+                    setLang("de");
                     setShowGate(false);
                   }}
                 />
@@ -3203,7 +3368,7 @@ function LangGate({
         </div>
         <p className="text-sm text-white/70 mb-4">Select your preferred language.</p>
         <div className="grid grid-cols-3 gap-2">
-          {(["fr", "en", "nl", "es", "zh"] as LangKey[]).map((l) => (
+          {(["ar", "fr", "en", "de", "nl", "es", "zh"] as LangKey[]).map((l) => (
             <button
               key={l}
               onClick={() => onPick(l)}
