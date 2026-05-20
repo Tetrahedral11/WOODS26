@@ -3600,21 +3600,39 @@ export default function WoodsSite() {
               <div className="mt-4 px-2 text-xs uppercase tracking-wider text-white/50">
                 Language
               </div>
-              <div className="p-2 flex gap-2">
-                {(["ar", "fr", "en", "de", "nl", "es", "zh"] as LangKey[]).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    className={cx(
-                      "px-3 py-1.5 rounded-full border text-sm",
-                      lang === l
+              <div className="p-2">
+                <div className="flex gap-2 mb-2">
+                  {(["ar", "fr", "en", "de"] as LangKey[]).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLang(l)}
+                      className={cx(
+                        "flex-1 px-3 py-1.5 rounded-full border text-sm",
+                        lang === l
                         ? "bg-seafoam text-black border-seafoam"
                         : "border-white/20 hover:bg-white/10"
-                    )}
-                  >
-                    {l.toUpperCase()}
-                  </button>
-                ))}
+                      )}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-center">
+                  {(["nl", "es", "zh"] as LangKey[]).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLang(l)}
+                      className={cx(
+                        "px-3 py-1.5 rounded-full border text-sm",
+                        lang === l
+                        ? "bg-seafoam text-black border-seafoam"
+                        : "border-white/20 hover:bg-white/10"
+                      )}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
             </nav>
 
