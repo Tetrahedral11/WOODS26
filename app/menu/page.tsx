@@ -3601,7 +3601,7 @@ export default function WoodsSite() {
                 Language
               </div>
               <div className="p-2">
-                <div className="flex gap-2 mb-2">
+                <div className="flex gap-2 mb-2 justify-center">
                   {(["ar", "fr", "en", "de"] as LangKey[]).map((l) => (
                     <button
                       key={l}
